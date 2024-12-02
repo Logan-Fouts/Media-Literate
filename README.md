@@ -59,5 +59,3 @@ Feel free to open issues or submit pull requests.
 MIT License
 
 ---
-
-*For detailed documentation and support, visit our [GitHub repository](https://github.com/yourusername/media-literate).*

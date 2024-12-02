@@ -1,0 +1,5 @@
+config.js
+.env
+*.pem
+node_modules/
+dist/

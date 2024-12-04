@@ -59,3 +59,17 @@ Feel free to open issues or submit pull requests.
 MIT License
 
 ---
+
+# Privacy Policy for Media Literacy Assistant
+
+This extension does not collect, store, or transmit any user data. 
+
+### How it works:
+1. Users provide their own Google AI Studio API key
+2. All article analysis is performed directly through the user's personal API credentials
+3. The API key is stored locally on the user's device using chrome.storage.local
+4. No data is collected or transmitted by the extension itself
+
+For questions about this privacy policy, contact me on github.
+
+Last updated: 3 Dec, 2024

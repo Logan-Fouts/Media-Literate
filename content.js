@@ -1,3 +1,1 @@
-const pageText = document.body.innerText;
-
-chrome.runtime.sendMessage({ action: "extractText", text: pageText });
+chrome.storage.local.set({'pageText': document.body.innerText });

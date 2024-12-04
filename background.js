@@ -1,40 +1,69 @@
-import config from './config.js';
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'getBreakDown') {
+        callApi()
+            .then(result => {
+                sendResponse({ success: true, data: result });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "extractText") {
-    const prompt = request.text;
-    if (prompt) {
-      callApi(prompt).then(responseText => {
-        chrome.runtime.sendMessage({ action: "displayResult", text: responseText });
-      });
+        return true;
     }
-  }
 });
 
-async function callApi(prompt) {
-  try {
-    const { GoogleGenerativeAI } = require("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(config.API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
+async function callApi() {
+    try {
+        const [pageText, apiKey] = await Promise.all([
+            new Promise((resolve) => {
+                chrome.storage.local.get(['pageText'], (result) => {
+                    resolve(result.pageText);
+                });
+            }),
+            new Promise((resolve) => {
+                chrome.storage.local.get(['googleAPIKey'], (result) => {
+                    resolve(result.googleAPIKey);
+                });
+            })
+        ]);
 
-    const instructions = `Please try to be extremely brief, first present a sentence summarizes the quality of the article then go on to do the more detailed breakdown. Please provide a Media Literacy Breakdown of the following article focusing on potential lies disinformation or biases.
+        if (!pageText || !apiKey) {
+            throw new Error('Missing required data (pageText or API key)');
+        }
 
-1. Examine the article's language, tone, and framing. Look for any bias, emotionally-charged words, or attempts to sway the reader's opinion.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
-2. Identify the key facts, data, and direct quotes. Assess whether they provide a balanced perspective or if certain viewpoints are emphasized.
+        const instructions = `Please try to be extremely brief, first present a sentence summarizes the quality of the article then go on to do the more detailed breakdown. Please provide a Media Literacy Breakdown of the following article focusing on potential lies disinformation or biases.
+                            1. Examine the article's language, tone, and framing. Look for any bias, emotionally-charged words, or attempts to sway the reader's opinion.
+                            2. Identify the key facts, data, and direct quotes. Assess whether they provide a balanced perspective or if certain viewpoints are emphasized.
+                            3. Consider the overall narrative and any potential omissions of relevant information or alternative viewpoints.
+                            4. Evaluate the credibility and diversity of the sources cited.
+                            5. Reflect on how the article's design and structure might influence the reader's understanding.
+                            Provide a concise summary of your analysis, highlighting areas where the article demonstrates balanced reporting as well as any potential biases or limitations in its coverage.`;
 
-3. Consider the overall narrative and any potential omissions of relevant information or alternative viewpoints.
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: instructions + pageText
+                    }]
+                }]
+            })
+        });
 
-4. Evaluate the credibility and diversity of the sources cited.
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-5. Reflect on how the article's design and structure might influence the reader's understanding.
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
 
-Provide a concise summary of your analysis, highlighting areas where the article demonstrates balanced reporting as well as any potential biases or limitations in its coverage.`;
-
-    const result = await model.generateContent(instructions + prompt);
-    return result.response.text();
-  } catch (error) {
-    console.error('Error generating content:', error);
-    return "Error processing the text.";
-  }
+    } catch (error) {
+        console.error('Error generating content:', error);
+        throw error;
+    }
 }

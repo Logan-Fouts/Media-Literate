@@ -1,25 +1,29 @@
 {
-    "manifest_version": 3,
-    "name": "Media Literacy",
-    "description": "Helps users break down media for easier understanding of media literacy.",
+    "name": "Media Literate",
+    "description": "Allows users to get a quick media literacy breakdown for a page.",
     "version": "1.0",
     "permissions": [
-      "activeTab"
+        "activeTab",
+        "storage",
+        "scripting"
     ],
     "action": {
-      "default_popup": "popup.html",
-      "default_icon": "images/reading.png"
+        "default_icon": "images/icon.png",
+        "default_title": "Media Literate",
+        "default_popup": "popup.html"
     },
     "background": {
-      "service_worker": "dist/bundle.js"
+        "service_worker": "background.js"
     },
     "content_scripts": [
-      {
-        "matches": ["<all_urls>"],
-        "js": ["content.js"]
-      }
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
     ],
-    "content_security_policy": {
-      "extension_pages": "script-src 'self'; object-src 'self'"
-    }
-  }
+    "manifest_version": 3
+}

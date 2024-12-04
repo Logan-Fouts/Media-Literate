@@ -1,55 +1,53 @@
-function convertMarkdownToHtml(markdown) {
-    if (!markdown) return '';
-
-    const rules = [
-        // Headers
-        [/^# (.*$)/gm, '<h1>$1</h1>'],
-        [/^## (.*$)/gm, '<h2>$1</h2>'],
-        [/^### (.*$)/gm, '<h3>$1</h3>'],
-        
-        // Bold
-        [/\*\*(.*?)\*\*/g, '<strong>$1</strong>'],
-        
-        // Italic
-        [/\*(.*?)\*/g, '<em>$1</em>'],
-        
-        // Code blocks
-        [/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>'],
-        
-        // Inline code
-        [/`([^`]+)`/g, '<code>$1</code>'],
-        
-        // Links
-        [/$$([^$$]+)\]$$([^$$]+)\)/g, '<a href="$2" target="_blank">$1</a>'],
-        
-        // Lists (changed to use bullets for both)
-        [/^\* (.+)/gm, '<ul><li>$1</li></ul>'],
-        [/^\d\. (.+)/gm, '<ul><li>$1</li></ul>'], // Changed from ol to ul
-        
-        // Paragraphs
-        [/^(?!<[a-z])(.*$)/gm, '<p>$1</p>']
-    ];
-
-    let html = markdown;
-    rules.forEach(([rule, template]) => {
-        html = html.replace(rule, template);
+function checkKey() {
+    chrome.storage.local.get(['googleAPIKey'], function(result) {
+        console.log(result.googleAPIKey);
+        if (!result.googleAPIKey) {
+            getAPIKey();
+        }
     });
-
-    // Clean up empty paragraphs
-    html = html.replace(/<p>\s*<\/p>/g, '');
-    
-    // Convert line breaks
-    html = html.replace(/\n/g, '<br>');
-
-    return html;
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "displayResult") {
-        const textOutputElement = document.getElementById('textOutput');
-        if (textOutputElement) {
-            const htmlContent = convertMarkdownToHtml(request.text);
-            textOutputElement.innerHTML = htmlContent;
+function getAPIKey() {
+    // Create message for user
+    const heading = document.createElement('h2');
+    heading.textContent = 'Please Fill In Your API Key';
+
+    // Create link to get API key
+    const url = document.createElement('a');
+    url.href = 'https://aistudio.google.com/apikey';
+    url.textContent = 'Google AI Studio';
+    url.target = '_blank';
+
+    // Create input for API key
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'API Key Here';
+    input.id = 'apiKeyInput';
+    
+    // Create a container div for better organization
+    const container = document.createElement('div');
+    container.appendChild(heading);
+    container.appendChild(url);
+    container.appendChild(input);
+
+    // Optionally add a button to save/use the API key
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Save API Key';
+    saveButton.onclick = function () {
+        const apiKey = input.value.trim();
+        if (apiKey) {
+            // Save to Chrome storage instead of localStorage
+            chrome.storage.local.set({googleAPIKey: apiKey}, function() {
+                alert('API Key saved!');
+                // Optional: Remove the input elements after saving
+                container.remove();
+            });
+        } else {
+            alert('Please enter a valid API key');
         }
-    }
-});
+    };
+
+    container.appendChild(saveButton);
+    document.body.appendChild(container);
+}
+checkKey();

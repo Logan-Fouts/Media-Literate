@@ -3,9 +3,7 @@
     "description": "Allows users to get a quick media literacy breakdown for a page.",
     "version": "1.0",
     "permissions": [
-        "activeTab",
-        "storage",
-        "scripting"
+        "storage"
     ],
     "action": {
         "default_icon": "images/icon.png",
